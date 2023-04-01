@@ -2,72 +2,75 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\GetProductRequest;
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
 use App\Models\Product;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 
 class ProductController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(GetProductRequest $request)
     {
-        $products = Product::all();
+        $products = Product::query();
 
-        return response()->json($products);
-    }
+        $request = $request->validated();
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create(StoreProductRequest $request)
-    {
-        //
+        if (Arr::exists($request, 'name')) {
+            $products->where('name', 'LIKE', '%' . $request['name'] . '%');
+        }
+
+        if (Arr::exists($request, 'sort_by')) {
+            $sort_by = $request['sort_by'];
+            $sort_dir = $request['sort_dir'] ?? 'asc';
+            $products->orderBy($sort_by, $sort_dir);
+        }
+
+        $products = $products->get();
+
+        return response()->json($products, $products->isEmpty() ? 204 : 200);
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreProductRequest $request)
     {
         $product = Product::create($request->validated());
 
-        return response()->json(['message' => 'Product created', 'product' => $product]);
+        return response()->json(['message' => 'Product created', 'product' => $product], 201);
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(int $product_id)
+    public function show(int $productId)
     {
-        $product = Product::find($product_id);
-
-        if (!$product) {
-            response()->json(['message' => 'Product not found'], 404);
+        try {
+            $product = Product::findOrFail($productId);
+        }
+        catch (ModelNotFoundException $e) {
+            return response()->json(['message' => 'Product not found'], 404);
         }
 
         return response()->json($product);
     }
 
     /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateProductRequest $request, int $product_id)
+    public function update(UpdateProductRequest $request, int $productId)
     {
-        $product = Product::find($product_id);
-
-        if (!$product) {
-            response()->json(['message' => 'Product not found'], 404);
+        try {
+            $product = Product::find($productId);
+        }
+        catch (ModelNotFoundException $e) {
+            return response()->json(['message' => 'Product not found'], 404);
         }
 
         $product->fill($request->validated())->save();
@@ -78,12 +81,13 @@ class ProductController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(int $product_id)
+    public function destroy(int $productId)
     {
-        $product = Product::find($product_id);
-
-        if (!$product) {
-            response()->json(['message' => 'Product not found'], 404);
+        try {
+            $product = Product::findOrFail($productId);
+        }
+        catch (ModelNotFoundException $e) {
+            return response()->json(['message' => 'Product not found'], 404);
         }
 
         $product->delete();

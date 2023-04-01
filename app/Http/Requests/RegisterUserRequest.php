@@ -6,15 +6,8 @@ use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class StoreProductRequest extends FormRequest
+class RegisterUserRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
-    public function authorize(): bool
-    {
-        return true;
-    }
 
     /**
      * Get the validation rules that apply to the request.
@@ -24,9 +17,10 @@ class StoreProductRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|unique:products|string|max:255',
-            'description' => 'required|string|max:255',
-            'price' => 'required|numeric|max:999999.99',
+            'name' => 'required',
+            'email' => 'required|email|unique:users',
+            'password' => 'required|min:8',
+            'c_password' => 'required|same:password',
         ];
     }
 
