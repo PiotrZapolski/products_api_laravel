@@ -56,6 +56,20 @@ class User extends Authenticatable implements JWTSubject
         );
     }
 
+    protected function name(): Attribute
+    {
+        return Attribute::make(
+            set: fn ($value) => ucfirst(strtolower($value))
+        );
+    }
+
+    protected function email(): Attribute
+    {
+        return Attribute::make(
+            set: fn ($value) => strtolower($value)
+        );
+    }
+
     public function getJWTIdentifier()
     {
         return $this->getKey();

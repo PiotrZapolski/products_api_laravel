@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\GetProductRequest;
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
+use App\Http\Resources\ProductResource;
 use App\Models\Product;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
@@ -31,7 +32,7 @@ class ProductController extends Controller
             $products->orderBy($sort_by, $sort_dir);
         }
 
-        $products = $products->get();
+        $products = ProductResource::collection($products->get());
 
         return response()->json($products, $products->isEmpty() ? 204 : 200);
     }
