@@ -33,9 +33,7 @@ class AuthController
 
     public function register(RegisterUserRequest $request)
     {
-        $request = $request->validated();
-        $request['password'] = bcrypt($request['password']); // use bcrypt to hash the passwords
-        $user = User::create($request); // eloquent creation of data
+        $user = User::create($request->validated()); // eloquent creation of data
 
         $success['user'] = $user;
 
