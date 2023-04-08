@@ -18,23 +18,18 @@ class ProductController extends Controller
      */
     public function index(GetProductRequest $request)
     {
-        $products = Product::query();
-
         $request = $request->validated();
 
-        if (Arr::exists($request, 'name')) {
-            $products->where('name', 'LIKE', '%' . $request['name'] . '%');
-        }
+        $sort_by = $request['sort_by'] ?? 'id';
+        $sort_dir = $request['sort_dir'] ?? 'asc';
 
-        if (Arr::exists($request, 'sort_by')) {
-            $sort_by = $request['sort_by'];
-            $sort_dir = $request['sort_dir'] ?? 'asc';
-            $products->orderBy($sort_by, $sort_dir);
-        }
+        $products = Product::when(isset($request['name']), function ($query) use ($request) {
+                $query->where('name', 'LIKE', '%' . $request['name'] . '%');
+            })
+            ->orderBy($sort_by, $sort_dir)
+            ->get();
 
-        $products = ProductResource::collection($products->get());
-
-        return response()->json($products, $products->isEmpty() ? 204 : 200);
+        return response()->json(ProductResource::collection($products), $products->isEmpty() ? 204 : 200);
     }
 
     /**
@@ -44,7 +39,7 @@ class ProductController extends Controller
     {
         $product = Product::create($request->validated());
 
-        return response()->json(['message' => 'Product created', 'product' => $product], 201);
+        return response()->json(['message' => 'Product created', 'product' => new ProductResource($product)], 201);
     }
 
     /**
@@ -59,7 +54,7 @@ class ProductController extends Controller
             return response()->json(['message' => 'Product not found'], 404);
         }
 
-        return response()->json($product);
+        return response()->json(new ProductResource($product));
     }
 
     /**
@@ -76,7 +71,7 @@ class ProductController extends Controller
 
         $product->fill($request->validated())->save();
 
-        return response()->json(['message' => 'Product updated', 'product' => $product]);
+        return response()->json(['message' => 'Product updated', 'product' => new ProductResource($product)]);
     }
 
     /**
